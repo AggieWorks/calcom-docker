@@ -29,11 +29,23 @@ COPY calcom/packages ./packages
 COPY calcom/tests ./tests
 
 RUN yarn config set httpTimeout 1200000
-RUN npx turbo prune --scope=@calcom/web --docker
+RUN npx turbo prune --scope=@calcom/web --scope=@calcom/trpc --docker
 RUN yarn install
-RUN yarn db-deploy
-RUN yarn --cwd packages/prisma seed-app-store
+# RUN yarn db-deploy
+# RUN yarn --cwd packages/prisma seed-app-store
+# instead use the following scripts during container runtime incase schema doesn't match
+# docker compose run --rm calcom yarn db-deploy
+# docker compose run --rm calcom yarn --cwd packages/prisma seed-app-store
 # Build and make embed servable from web/public/embed folder
+
+RUN yarn add update-browserslist-db
+RUN npx update-browserslist-db@latest
+
+RUN apt-get update  && apt-get install -y \
+    libvips-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN yarn workspace @calcom/trpc run build
 RUN yarn --cwd packages/embeds/embed-core workspace @calcom/embed-core run build
 RUN yarn --cwd apps/web workspace @calcom/web run build
 
@@ -62,7 +74,17 @@ COPY scripts scripts
 ENV NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL \
     BUILT_NEXT_PUBLIC_WEBAPP_URL=$NEXT_PUBLIC_WEBAPP_URL
 
-RUN scripts/replace-placeholder.sh http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER ${NEXT_PUBLIC_WEBAPP_URL}
+# Normalize line endings and make all scripts executable
+# this is a windows specific fix, ubuntu systems can use the simpler command to run 
+# replace-placeholder.sh
+RUN apt-get update && apt-get install -y dos2unix && rm -rf /var/lib/apt/lists/* && \
+    dos2unix scripts/*.sh && \
+    chmod +x scripts/*.sh && \
+    bash scripts/replace-placeholder.sh \
+    http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER \
+    "${NEXT_PUBLIC_WEBAPP_URL}"
+
+# RUN scripts/replace-placeholder.sh http://NEXT_PUBLIC_WEBAPP_URL_PLACEHOLDER ${NEXT_PUBLIC_WEBAPP_URL}
 
 FROM node:18 as runner
 

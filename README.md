@@ -35,13 +35,13 @@ Note: `docker compose` without the hyphen is now the primary method of using doc
 1. Clone calcom/docker
 
     ```bash
-    git clone https://github.com/calcom/docker.git
+    git clone https://github.com/Aggieworks/calcom-docker.git
     ```
 
 2. Change into the directory
 
     ```bash
-    cd docker
+    cd calcom-docker
     ```
 
 3. Prepare your configuration: Rename `.env.example` to `.env` and then update `.env`
@@ -62,10 +62,9 @@ Note: `docker compose` without the hyphen is now the primary method of using doc
 
     This will use the default image locations as specified by `image:` in the docker-compose.yaml file.
 
-    Note: To aid with support, by default Scarf.sh is used as registry proxy for download metrics.
-
-5. Start Cal.com via docker compose
-
+    Note : By default this image is built to work on Macs (that can emulate amd84) and other machines with AMD CPU
+ 
+5. 
     (Most basic users, and for First Run) To run the complete stack, which includes a local Postgres database, Cal.com web app, and Prisma Studio:
 
     ```bash
@@ -86,9 +85,21 @@ Note: `docker compose` without the hyphen is now the primary method of using doc
 
     **Note: to run in attached mode for debugging, remove `-d` from your desired run command.**
 
-6. PSQL environment variable setup
+6. Apply migrations and seed the default App Store data by running:
+  
+    ```bash
+      # Apply all pending Prisma migrations
+      docker compose exec calcom yarn db-deploy
 
-    
+      # Seed the App Store defaults
+      docker compose exec calcom yarn --cwd packages/prisma seed-app-store
+    ```
+
+    Alternatively, to run both in one shot:
+
+      ```bash
+      docker compose exec calcom sh -c "yarn db-deploy && yarn --cwd packages/prisma seed-app-store"
+      ```
 
 7. Open a browser to [http://localhost:3000](http://localhost:3000), or your defined NEXT_PUBLIC_WEBAPP_URL. The first time you run Cal.com, a setup wizard will initialize. Define your first user, and you're ready to go!
 

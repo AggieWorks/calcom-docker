@@ -22,7 +22,8 @@ services:
       - stack
 
   calcom:
-    image: calcom.docker.scarf.sh/calcom/cal.com
+    # original image: calcom.docker.scarf.sh/calcom/cal.com
+    image: raj978/calcom:latest
     platform: linux/amd64 # make sure to change this depedning on platform
     build:
       context: .
@@ -36,7 +37,7 @@ services:
         CALENDSO_ENCRYPTION_KEY: ${CALENDSO_ENCRYPTION_KEY}
         DATABASE_URL: ${DATABASE_URL}
         DATABASE_DIRECT_URL: ${DATABASE_URL}
-      network: stack
+      network: stack # make sure to comment this when custom building the image, stack is not known at buildtime
     restart: always
     networks:
       - stack
@@ -50,7 +51,7 @@ services:
       - database
   # Optional use of Prisma Studio. In production, comment out or remove the section below to prevent unwanted access to your database.
   studio:
-    image: calcom.docker.scarf.sh/calcom/cal.com
+    image: raj978/calcom:latest
     platform: linux/amd64
     restart: always
     networks:
